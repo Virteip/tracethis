@@ -101,7 +101,8 @@ function setLiveStatus(status) {
 
 // ─── Trace management ─────────────────────────────────────────────────────────
 function upsertTrace(trace) {
-  const isNew = !traces.has(trace.id);
+  const prevTrace = traces.get(trace.id);
+  const isNew = !prevTrace;
   traces.set(trace.id, trace);
 
   if (isNew) {
@@ -120,6 +121,11 @@ function upsertTrace(trace) {
     // Refresh request/response tab if it's active (data may have arrived)
     if (currentTab === 'request') {
       renderRequestResponseTab(trace);
+    }
+    // Reload summary tab when trace transitions from running to complete
+    // so N+1 detection and DB stats reflect all finalized spans
+    if (currentTab === 'summary' && prevTrace?.status === 'running' && trace.status !== 'running') {
+      loadSummaryTab(trace);
     }
   }
 }

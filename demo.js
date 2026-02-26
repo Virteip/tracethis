@@ -7,6 +7,8 @@
 'use strict';
 
 const { init, traceMiddleware, traceIt, traced } = require('./dist/cjs/index.js');
+const { collector } = require('./dist/cjs/collector.js');
+const { getContext } = require('./dist/cjs/context.js');
 init({ port: 4321 });
 
 const http  = require('http');
@@ -34,9 +36,15 @@ function httpsGetJson(url) {
 }
 
 // Simulates a DB query with a realistic delay.
+// Creates a proper 'db' span so N+1 detection and DB stats work correctly.
 function fakeDbQuery(label, delayMs) {
-  return traceIt(`db: ${label}`, () =>
-    delay(delayMs).then(() => ({ rows: [{ id: 1 }] }))
+  const ctx = getContext();
+  if (!ctx) return delay(delayMs).then(() => ({ rows: [{ id: 1 }] }));
+
+  const span = collector.createSpan(ctx.traceId, label, 'db', ctx.spanId);
+  return delay(delayMs).then(
+    () => { collector.finalizeSpan(span); return { rows: [{ id: 1 }] }; },
+    (err) => { collector.finalizeSpan(span, err.message); throw err; },
   );
 }
 
