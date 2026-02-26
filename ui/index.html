@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tracethis — Request Tracer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ── Header ── -->
+    <header class="header">
+      <div class="header-left">
+        <span class="logo">tracethis</span>
+        <span class="header-subtitle">local request tracer</span>
+      </div>
+      <div class="header-right">
+        <span class="live-dot" id="liveDot" title="Connecting…"></span>
+        <span class="live-label" id="liveLabel">connecting</span>
+        <button class="btn-ghost" id="clearBtn" title="Clear all traces">clear</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- ── Left panel: trace list ── -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Traces</span>
+          <span class="trace-count" id="traceCount">0</span>
+        </div>
+        <ul class="trace-list" id="traceList">
+          <li class="empty-state" id="emptyState">
+            <div class="empty-icon">⏱</div>
+            <div class="empty-text">No traces yet</div>
+            <div class="empty-hint">Make a request to your server to see it here</div>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- ── Right panel ── -->
+      <main class="main" id="main">
+        <div class="placeholder" id="placeholder">
+          <div class="placeholder-icon">←</div>
+          <div class="placeholder-text">Select a trace to inspect</div>
+        </div>
+
+        <div class="detail" id="detail" hidden>
+          <!-- Trace meta bar -->
+          <div class="trace-meta" id="traceMeta"></div>
+
+          <!-- Tab bar -->
+          <div class="tab-bar" id="tabBar">
+            <button class="tab-btn active" data-tab="summary">Summary</button>
+            <button class="tab-btn" data-tab="request">Request / Response</button>
+            <button class="tab-btn" data-tab="inspector">Span Inspector</button>
+          </div>
+
+          <!-- Tab panels -->
+          <div class="tab-content" id="tabContent">
+
+            <!-- Tab: Summary -->
+            <div class="tab-panel" id="tabSummary">
+              <!-- N+1 warning banner -->
+              <div class="n1-banner" id="n1Banner" hidden>
+                <span class="n1-icon">&#9888;</span>
+                <div class="n1-body">
+                  <span class="n1-title">N+1 Query Detected</span>
+                  <div class="n1-patterns" id="n1Patterns"></div>
+                </div>
+              </div>
+
+              <div class="summary-grid">
+                <div class="summary-section">
+                  <div class="section-label">External Dependencies</div>
+                  <div id="depsContent">
+                    <div class="loading-msg" id="depsLoading">Loading…</div>
+                    <div class="no-data" id="noDepsMsg" hidden>No outbound HTTP calls</div>
+                    <table class="dep-table" id="depTable" hidden>
+                      <thead>
+                        <tr>
+                          <th>Host</th>
+                          <th class="num-col">Calls</th>
+                          <th class="num-col">Total</th>
+                          <th class="num-col">Avg</th>
+                        </tr>
+                      </thead>
+                      <tbody id="depTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="summary-section">
+                  <div class="section-label">Database</div>
+                  <div id="dbContent">
+                    <div class="loading-msg" id="dbLoading">Loading…</div>
+                    <div id="dbStats" hidden></div>
+                  </div>
+
+                  <div class="section-label section-label-spaced">Route History</div>
+                  <div id="sparklineContent">
+                    <div class="loading-msg" id="sparklineLoading">Loading…</div>
+                    <div class="sparkline-row" id="sparklineRow" hidden></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Request / Response -->
+            <div class="tab-panel" id="tabRequest" hidden>
+              <div class="req-res-grid">
+                <div class="req-res-section">
+                  <div class="section-label">Request</div>
+                  <div class="section-label-sub">Headers</div>
+                  <table class="headers-table" id="reqHeadersTable"><tbody></tbody></table>
+                  <div class="section-label-sub">Body</div>
+                  <pre class="body-content" id="reqBody"></pre>
+                  <div class="truncated-notice" id="reqBodyTruncated" hidden>Truncated at 10 KB</div>
+                </div>
+                <div class="req-res-section">
+                  <div class="section-label">Response</div>
+                  <div class="section-label-sub">Headers</div>
+                  <table class="headers-table" id="resHeadersTable"><tbody></tbody></table>
+                  <div class="section-label-sub">Body</div>
+                  <pre class="body-content" id="resBody"></pre>
+                  <div class="truncated-notice" id="resBodyTruncated" hidden>Truncated at 10 KB</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Span Inspector -->
+            <div class="tab-panel" id="tabInspector" hidden>
+              <div class="inspector-empty" id="inspectorEmpty">Click a span in the waterfall to inspect it</div>
+              <div class="inspector-content" id="inspectorContent" hidden>
+                <dl class="inspector-attrs" id="inspectorAttrs"></dl>
+                <!-- Shown only for http-outgoing spans that have captured I/O -->
+                <div class="inspector-http-io" id="inspectorHttpIO" hidden>
+                  <div class="req-res-grid">
+                    <div class="req-res-section">
+                      <div class="section-label">Outgoing Request</div>
+                      <div class="section-label-sub">Headers</div>
+                      <table class="headers-table" id="outReqHeadersTable"><tbody></tbody></table>
+                      <div class="section-label-sub">Body</div>
+                      <pre class="body-content" id="outReqBody"></pre>
+                    </div>
+                    <div class="req-res-section">
+                      <div class="section-label">Response</div>
+                      <div class="section-label-sub">Headers</div>
+                      <table class="headers-table" id="outResHeadersTable"><tbody></tbody></table>
+                      <div class="section-label-sub">Body</div>
+                      <pre class="body-content" id="outResBody"></pre>
+                      <div class="truncated-notice" id="outResBodyTruncated" hidden>Truncated at 10 KB</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /tab-content -->
+
+          <!-- Legend -->
+          <div class="legend" id="legend">
+            <span class="legend-item"><span class="legend-dot type-http-incoming"></span>request</span>
+            <span class="legend-item"><span class="legend-dot type-http-outgoing"></span>http</span>
+            <span class="legend-item"><span class="legend-dot type-db"></span>db</span>
+            <span class="legend-item"><span class="legend-dot type-function"></span>function</span>
+            <span class="legend-item"><span class="legend-dot type-error"></span>error</span>
+          </div>
+
+          <!-- Waterfall -->
+          <div class="waterfall-container">
+            <div class="waterfall-header">
+              <div class="span-label-col">Span</div>
+              <div class="span-timeline-col">
+                <div class="timeline-ruler" id="timelineRuler"></div>
+              </div>
+            </div>
+            <div class="waterfall-rows" id="waterfallRows"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
