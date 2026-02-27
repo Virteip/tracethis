@@ -60,12 +60,48 @@
 
             <!-- Tab: Summary -->
             <div class="tab-panel" id="tabSummary">
-              <!-- N+1 warning banner -->
+              <!-- N+1 query banner -->
               <div class="n1-banner" id="n1Banner" hidden>
                 <span class="n1-icon">&#9888;</span>
                 <div class="n1-body">
                   <span class="n1-title">N+1 Query Detected</span>
                   <div class="n1-patterns" id="n1Patterns"></div>
+                </div>
+              </div>
+
+              <!-- N+1 HTTP banner -->
+              <div class="n1-banner" id="httpN1Banner" hidden>
+                <span class="n1-icon">&#9888;</span>
+                <div class="n1-body">
+                  <span class="n1-title">N+1 HTTP Calls Detected</span>
+                  <div class="n1-patterns" id="httpN1Patterns"></div>
+                </div>
+              </div>
+
+              <!-- High DB time ratio banner -->
+              <div class="warn-banner warn-banner--yellow" id="dbRatioBanner" hidden>
+                <span class="warn-icon">&#9888;</span>
+                <div class="warn-body">
+                  <span class="warn-title">Database Bottleneck</span>
+                  <span class="warn-detail" id="dbRatioDetail"></span>
+                </div>
+              </div>
+
+              <!-- Slow query banner -->
+              <div class="warn-banner warn-banner--yellow" id="slowQueryBanner" hidden>
+                <span class="warn-icon">&#9888;</span>
+                <div class="warn-body">
+                  <span class="warn-title">Slow Query Detected</span>
+                  <div class="warn-detail" id="slowQueryPatterns"></div>
+                </div>
+              </div>
+
+              <!-- Sequential queries banner -->
+              <div class="warn-banner warn-banner--blue" id="seqQueryBanner" hidden>
+                <span class="warn-icon">&#8505;</span>
+                <div class="warn-body">
+                  <span class="warn-title">Sequential DB Queries</span>
+                  <span class="warn-detail" id="seqQueryDetail"></span>
                 </div>
               </div>
 

@@ -284,6 +284,22 @@ async function fetchPostsWithAuthors() {
   });
 }
 
+// /http-n-plus-one — classic N+1 HTTP call pattern
+// Fetches each post's comments in a serial loop instead of batching.
+// Each loop iteration produces an auto-instrumented http-outgoing span with
+// the same normalised path (/posts/?/comments), triggering the HTTP N+1 warning.
+async function getPostsWithComments() {
+  return traceIt('get-posts-with-comments', async () => {
+    const postIds = [1, 2, 3, 4, 5];
+    const results = [];
+    for (const id of postIds) {
+      const comments = await httpsGetJson(`https://jsonplaceholder.typicode.com/posts/${id}/comments`);
+      results.push({ postId: id, commentCount: comments.length });
+    }
+    return results;
+  });
+}
+
 // ── HTTP server ────────────────────────────────────────────────────────────
 // IMPORTANT: pass the async handler directly as next() so it runs inside
 // traceMiddleware's runWithContext(). Using `await new Promise(resolve =>
@@ -335,6 +351,11 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(body, null, 2));
 
+      } else if (url === '/http-n-plus-one') {
+        body = await getPostsWithComments();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(body, null, 2));
+
       } else if (url === '/auth') {
         // Alternate between a fresh token (cache miss) and a repeated one (cache hit)
         const token = Math.random() < 0.5
@@ -367,7 +388,8 @@ server.listen(3000, () => {
   console.log('    GET /health      — lightweight trace (good for building sparkline history)');
   console.log('    GET /error       — error span + cascading trace failure');
   console.log('    GET /dashboard   — parallel fan-out with traced() service functions');
-  console.log('    GET /n-plus-one  — N+1 query pattern (triggers N+1 warning in UI)');
+  console.log('    GET /n-plus-one       — N+1 query pattern (triggers N+1 warning in UI)');
+  console.log('    GET /http-n-plus-one  — N+1 HTTP call pattern (triggers HTTP N+1 warning in UI)');
   console.log('    GET /slow        — three slow parallel aggregation queries');
   console.log('    GET /retry       — flaky service with retry loop and backoff spans');
   console.log('    GET /auth        — cache-hit vs cache-miss pattern');

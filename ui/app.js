@@ -45,6 +45,14 @@ const tabInspector    = document.getElementById('tabInspector');
 // Summary tab elements
 const n1Banner        = document.getElementById('n1Banner');
 const n1Patterns      = document.getElementById('n1Patterns');
+const httpN1Banner    = document.getElementById('httpN1Banner');
+const httpN1Patterns  = document.getElementById('httpN1Patterns');
+const dbRatioBanner     = document.getElementById('dbRatioBanner');
+const dbRatioDetail     = document.getElementById('dbRatioDetail');
+const slowQueryBanner   = document.getElementById('slowQueryBanner');
+const slowQueryPatterns = document.getElementById('slowQueryPatterns');
+const seqQueryBanner  = document.getElementById('seqQueryBanner');
+const seqQueryDetail  = document.getElementById('seqQueryDetail');
 const depsLoading     = document.getElementById('depsLoading');
 const noDepsMsg       = document.getElementById('noDepsMsg');
 const depTable        = document.getElementById('depTable');
@@ -264,13 +272,18 @@ async function loadSummaryTab(trace) {
   sparklineLoading.hidden = false;
   sparklineRow.hidden = true;
   n1Banner.hidden = true;
+  httpN1Banner.hidden = true;
+  dbRatioBanner.hidden = true;
+  slowQueryBanner.hidden = true;
+  seqQueryBanner.hidden = true;
 
   try {
     const summaryRes = await fetch(`/api/traces/${trace.id}/summary`);
     if (summaryRes.ok) {
-      const { external, db } = await summaryRes.json();
+      const { external, db, httpN1 } = await summaryRes.json();
       renderDependencies(external);
       renderDbStats(db);
+      renderHttpN1(httpN1);
     }
   } catch {
     depsLoading.hidden = true;
@@ -308,6 +321,14 @@ function renderDependencies(external) {
   }
 }
 
+function renderHttpN1(httpN1) {
+  if (!httpN1?.hasNPlusOne) return;
+  httpN1Patterns.innerHTML = httpN1.patterns
+    .map(p => `<div class="n1-pattern-row"><code>${esc(p.pattern)}</code> — ${p.count}×</div>`)
+    .join('');
+  httpN1Banner.hidden = false;
+}
+
 function renderDbStats(db) {
   dbLoading.hidden = true;
   if (!db || db.totalQueries === 0) {
@@ -336,6 +357,28 @@ function renderDbStats(db) {
       .map(p => `<div class="n1-pattern-row"><code>${esc(p.pattern)}</code> — ${p.count}×</div>`)
       .join('');
     n1Banner.hidden = false;
+  }
+
+  // High DB time ratio banner
+  if (db.highDbTimeRatio) {
+    dbRatioDetail.textContent = `Database consumed ${db.dbTimePct}% of total request time. Consider query optimisation or caching.`;
+    dbRatioBanner.hidden = false;
+  }
+
+  // Slow query banner
+  if (db.hasSlowQuery) {
+    const slow = db.patterns.filter(p => p.isSlow);
+    slowQueryPatterns.innerHTML = slow
+      .map(p => `<div class="n1-pattern-row"><code>${esc(p.pattern)}</code> — avg ${formatDuration(p.avgDuration)}</div>`)
+      .join('');
+    slowQueryBanner.hidden = false;
+  }
+
+  // Sequential queries banner
+  if (db.hasSequentialQueries) {
+    const groups = db.sequentialGroupCount;
+    seqQueryDetail.textContent = `${groups} set${groups > 1 ? 's' : ''} of DB queries ran sequentially and may be parallelisable with Promise.all.`;
+    seqQueryBanner.hidden = false;
   }
 }
 

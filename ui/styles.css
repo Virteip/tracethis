@@ -286,6 +286,44 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   border-radius: 3px;
 }
 
+/* ── Generic warning banners ────────────────────────────────────────────────── */
+.warn-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.warn-banner--yellow {
+  background: rgba(210, 153, 34, 0.12);
+  border: 1px solid rgba(210, 153, 34, 0.4);
+}
+.warn-banner--blue {
+  background: rgba(56, 139, 253, 0.1);
+  border: 1px solid rgba(56, 139, 253, 0.35);
+}
+.warn-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.warn-banner--yellow .warn-icon { color: var(--yellow); }
+.warn-banner--blue   .warn-icon { color: var(--blue); }
+.warn-body { flex: 1; }
+.warn-title {
+  font-weight: 600;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 2px;
+}
+.warn-banner--yellow .warn-title { color: var(--yellow); }
+.warn-banner--blue   .warn-title { color: var(--blue); }
+.warn-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ── Summary grid ───────────────────────────────────────────────────────────── */
 .summary-grid {
   display: grid;

@@ -15,7 +15,7 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { collector } from './collector.js';
-import { getExternalDependencySummary, getDbSummary, getRouteHistory } from './aggregations.js';
+import { getExternalDependencySummary, getDbSummary, getRouteHistory, getHttpNPlusOne } from './aggregations.js';
 import type { Trace } from './types.js';
 
 // Resolve the ui/ directory relative to this compiled file.
@@ -135,6 +135,7 @@ export function startServer(port: number): void {
       jsonResponse(res, {
         external: getExternalDependencySummary(trace),
         db: getDbSummary(trace),
+        httpN1: getHttpNPlusOne(trace),
       });
       return;
     }
