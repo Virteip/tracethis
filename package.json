@@ -2,17 +2,24 @@
   "name": "tracethis",
   "version": "0.1.0",
   "description": "Local request tracing for Node.js/TypeScript — see exactly where time goes in your HTTP requests during development",
-  "keywords": ["tracing", "performance", "devtools", "http", "waterfall", "development"],
+  "keywords": [
+    "tracing",
+    "performance",
+    "devtools",
+    "http",
+    "waterfall",
+    "development"
+  ],
   "author": "",
   "license": "MIT",
   "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
+  "module": "./dist/esm/index.mjs",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
     }
   },
   "files": [
@@ -20,19 +27,18 @@
     "ui"
   ],
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm && npm run build:types",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
+    "build": "tsup && npm run build:types",
     "build:types": "tsc -p tsconfig.types.json",
-    "dev": "tsc -p tsconfig.cjs.json --watch",
+    "dev": "tsup --watch",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "@jest/globals": "^29.0.0",
     "@types/node": "^20.0.0",
     "jest": "^29.0.0",
-    "@jest/globals": "^29.0.0",
     "ts-jest": "^29.0.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0"
   },
   "engines": {
@@ -41,7 +47,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.ts"],
+    "testMatch": [
+      "**/tests/**/*.test.ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     }
